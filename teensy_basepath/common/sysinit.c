@@ -26,7 +26,7 @@ int32_t			mcg_clk_khz;
 int32_t			core_clk_khz;
 int32_t			periph_clk_khz;
 
-
+extern int main();
 
 /*
  *  start()      initial entry point from the C run-time routine (crt0.s)
