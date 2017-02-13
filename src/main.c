@@ -10,40 +10,63 @@
  *  For a system clock of 48 MHz, blinks will read 0x30.
  */
 
-#include  "common.h"
+/*////////////////////////////////////////////////////////////////
+ * LED  (Pin 13) is PC5
+ * DOUT (Pin 11) is PC6
+ *
+ ****************************************************************/
 
-#define  LED_ON     GPIOC_PSOR=(1<<5)
-#define  LED_OFF    GPIOC_PCOR=(1<<5)
+#include <time.h>
 
-#define  LED2_ON     GPIOC_PSOR=(1<<6)
-#define  LED2_OFF    GPIOC_PCOR=(1<<6)
+#include "aliases.h"
+#include "common.h"
 
-int  main(void)
+#define LED  PORTC_PCR5
+#define DOUT PORTC_PCR6
+
+static const u8 LED_PC_PIN  = 5;
+static const u8 DOUT_PC_PIN = 6;
+
+#define make_output(pc_pin)	GPIOC_PDDR |= 1 << pc_pin 
+#define set_gpio(pc_pin)	pc_pin = PORT_PCR_MUX(0x01)
+#define clear_gpio			GPIOC_PDDR = 0x00
+
+/* PIN STATES */
+#define LED_ON				GPIOC_PSOR = LED_PC_PIN
+#define LED_OFF				GPIOC_PCOR = LED_PC_PIN
+#define DOUT_ON				GPIOC_PSOR = DOUT_PC_PIN
+#define DOUT_OFF			GPIOC_PCOR = DOUT_PC_PIN
+
+static void setup(void)
 {
-    volatile uint32_t       n;
-    uint32_t                v;
-    uint8_t                 mask;
+	clear_gpio;
+	set_gpio(LED);
+	make_output(LED_PC_PIN);
+	LED_OFF; // ~~~~~~~~~~~~~ LED init LOW.
 
-    PORTC_PCR5 = PORT_PCR_MUX(0x1); // LED is on PC5 (pin 13), config as GPIO (alt = 1)
-    GPIOC_PDDR = (1<<5);			// make this an output pin
-    LED_OFF;						// start with LED off
+	set_gpio(DOUT);
+	make_output(LED_PC_PIN);
+	DOUT_ON; // ~~~~~~~~~~~~~ DOUT init LOW.	
+}
 
-    PORTC_PCR6 = PORT_PCR_MUX(0x1); // LED connected to PC5 (pin 11), config as GPIO (alt = 1)
-    GPIOC_PDDR |= (1<<6);			// make this an output pin
-    LED2_ON;
+int main(void)
+{
+    volatile u32       n;
+    u32                v;
+    u8                 mask;
 
-    v = (uint32_t)mcg_clk_hz;
+	setup();
+
+    v = (u32) mcg_clk_hz;
     v = v / 1000000;
 
-    while (1)
-    {
-        LED2_ON;
+    for (;;) {
+        DOUT_ON;
         for (n=0; n<8000000; n++)  ;	// dumb delay
         mask = 0x80;
-        while (mask != 0)
-        {
+        while (mask != 0) {
             LED_ON;
-            for (n=0; n<1000; n++)  ;		// base delay
+            for (n=0; n<1000; n++)  ;
             if ((v & mask) == 0)  LED_OFF;	// for 0 bit, all done
             for (n=0; n<2000; n++)  ;		// (for 1 bit, LED is still on)
             LED_OFF;
@@ -52,5 +75,5 @@ int  main(void)
         }
     }
 
-	return  0;						// should never get here!
+	return 666;
 }
