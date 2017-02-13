@@ -18,7 +18,6 @@
 #define  LED2_ON     GPIOC_PSOR=(1<<6)
 #define  LED2_OFF    GPIOC_PCOR=(1<<6)
 
-
 int  main(void)
 {
     volatile uint32_t       n;
